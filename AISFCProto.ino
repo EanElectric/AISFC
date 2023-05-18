@@ -1,6 +1,7 @@
 #include "AISFCGPS.h"
 #include "AISFCAccelerometer.h"
 #include "AISFCBarometer.h"
+#include "AISFCLED.h"
 
 #include <SPI.h>
 #include <SD.h>

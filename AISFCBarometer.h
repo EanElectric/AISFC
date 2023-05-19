@@ -1,3 +1,18 @@
+/*
+  Barometer control header 
+
+  This header is to provide a set of functions for use with the Barometer.
+    **This is Mission Critical**
+  The barometer will control deployment of shutes. This function has not been completed yet. 
+  
+  Created: 12th May 2023
+  Last Update: 19th May 2023
+  Created By: Michael Haggart 
+  For: StarthAIS
+  Updated by: Michael Haggart 
+              #Add New Names Here
+*/
+
 #ifndef AISFCbarometer
 #define AISFCbarometer
 
@@ -9,6 +24,7 @@
 class AISFCbaro : public Adafruit_BMP085 {
 public:
     float calibrateBMP(bool& cs);
+    float getPressure();
     void readoutPressure();
     void readoutBMP();
     float startingAlt{};
@@ -35,6 +51,11 @@ float AISFCbaro::calibrateBMP(bool& cs) {
         }
     }
 }
+float AISFCbaro::getPressure()
+{
+  return this->readPressure();
+}
+
 
 void AISFCbaro::readoutPressure() {
     Serial.print("Pressure: ");

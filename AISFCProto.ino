@@ -1,93 +1,113 @@
+/*
+  Main sketch file 
+
+  This program is for the StrathAIS Flight Computer (AISFC)
+  It combines multiple header files together and dictates the functionality used 
+    **This program is build around the Arduino Mega dev board** 
+    **Please bear this in mind when using this code for other boards**
+    **Pin outs may be different**
+  
+  Created: May 2023
+  Last Update: 19th May 2023
+  Created By: Michael Haggart 
+  For: StarthAIS
+  Updated by: Michael Haggart 
+              #Add New Names Here
+*/
+
+
 #include "AISFCGPS.h"
 #include "AISFCAccelerometer.h"
 #include "AISFCBarometer.h"
 #include "AISFCLED.h"
+#include "AISFCTelecoms.h"
+#include "AISFCDataLogging.h"
 
-#include <SPI.h>
-#include <SD.h>
+
 
 Adafruit_MPU6050 mpu1;
-Adafruit_Sensor* mpu1_temp, * mpu1_accel, * mpu1_gyro;
+Adafruit_Sensor *mpu1_temp, *mpu1_accel, *mpu1_gyro;
+float x_accel1{}, y_accel1{}, z_accel1{};
+float timeSinceActivate{};
+float baroPressure{};
 const int mpu1_address = 0x69;
 
-File dataLog;
+
 SFE_UBLOX_GNSS NEO_M9;
 
 AISFCbaro baro;
+File dataLog;
 
 void setup() {
-    // put your setup code here, to run once:
-    Serial.begin(115200);
-    Serial.println("Test bed for Arduino Flight Computer");
-    if (!activateHardware())
-    {
-        Serial.println("Not all hardware activated successfully, check terminal log for failed device");
-        while (1)
-        {
-            delay(10);
-        }
+  // put your setup code here, to run once:
+  Serial.begin(115200);
+  Serial.println("Test bed for Arduino Flight Computer");
+  if (!activateHardware()) {
+    Serial.println("Not all hardware activated successfully, check terminal log for failed device");
+    while (1) {
+      delay(10);
     }
-    if (activateHardware())
-    {
-        Serial.println("Hardware activated successfully");
-    }
-    AISFCAccelerometer::getSensors(mpu1, mpu1_accel, mpu1_gyro, mpu1_temp);
-
+  }
+  if (activateHardware()) {
+    Serial.println("Hardware activated successfully");
+  }
+  AISFCAccelerometer::getSensors(mpu1, mpu1_accel, mpu1_gyro, mpu1_temp);
+  AISFCDataLogging::dataLogInit(dataLog);
 }
 
 void loop() {
-    AISFCAccelerometer::printSensors(mpu1_address);
-    // put your main code here, to run repeatedly:
-
+  // put your main code here, to run repeatedly:
+  mpu1.getAccelerometerSensor();
+  AISFCAccelerometer::printSensors(mpu1_address);
+  AISFCAccelerometer::get_xya(mpu1_address, x_accel1, y_accel1, z_accel1); 
+  baroPressure = baro.getPressure();
+  timeSinceActivate = millis();
+  String entry = AISFCDataLogging::loggedData(timeSinceActivate, baroPressure, x_accel1, y_accel1, z_accel1);
+  AISFCDataLogging::writeEntry(entry, dataLog);
 }
 
-bool activateHardware()
-{
-    bool accelFlag01{}, SDFlag{}, gpsFlag{};
-    if (!mpu1.begin(mpu1_address))
-    {
-        Serial.println("Accelerometer 1 failed to activate");
-        accelFlag01 = false;
+bool activateHardware() {
+  bool accelFlag01{}, SDFlag{}, gpsFlag{}, baroFlag{};
+  if (!mpu1.begin(mpu1_address)) {
+    Serial.println("Accelerometer 1 failed to activate");
+    accelFlag01 = false;
+  }
+  if (mpu1.begin(mpu1_address)) {
+    Serial.println("Accelerometer 1 activated");
+    accelFlag01 = true;
+  }
+  if (!SD.begin(4)) {
+    Serial.println("SD data logger failed to activate");
+    SDFlag = false;
+  }
+  if (SD.begin(4)) {
+    Serial.println("SD data logger activated");
+    if (dataLog) {
+      dataLog.println("Flight Log");
     }
-    if (mpu1.begin(mpu1_address))
-    {
-        Serial.println("Accelerometer 1 activated");
-        accelFlag01 = true;
-    }
+    SDFlag = true;
+  }
+  if (!NEO_M9.begin()) {
+    Serial.println("GPS failed to activate");
+    gpsFlag = false;
+  }
+  if (NEO_M9.begin()) {
+    Serial.println("GPS activated");
+    startGPS(NEO_M9);
+    gpsFlag = true;
+  }
+  if (!baro.begin()) {
+    Serial.println("Barometer failed to activate");
+    baroFlag = false;
+  }
+  if (baro.begin()) {
+    Serial.println("Barometer activated");
+    baroFlag = true;
+  }
 
-    if (!SD.begin(4))
-    {
-        Serial.println("SD data logger failed to activate");
-        SDFlag = false;
-    }
-    if (SD.begin(4))
-    {
-        Serial.println("SD data logger activated");
-        if (dataLog)
-        {
-            dataLog.println("Flight Log");
-        }
-        SDFlag = true;
-    }
-    if (!NEO_M9.begin())
-    {
-        Serial.println("GPS failed to activate");
-        gpsFlag = false;
-    }
-    if (NEO_M9.begin())
-    {
-        Serial.println("GPS activated");
-        startGPS(NEO_M9);
-    }
-    
-
-
-    if (accelFlag01 == true && SDFlag == true)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
+  if (accelFlag01 == true && SDFlag == true) {
+    return true;
+  } else {
+    return false;
+  }
 }

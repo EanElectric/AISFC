@@ -1,4 +1,20 @@
-// AISFCAccelerometer.h
+/*
+  Accelerometer control header 
+
+  This header is to control the accelerometer functions of the flight computer.
+    **This is Mission Critical**
+  The impulse of launch is used by the accelerometer to tell the Flight Computer to 
+  allow the barometer to control the charges. 
+    **Basically: if (Launched == true){
+                    bool depChargeArm = true; }
+  
+  Created: 12th May 2023
+  Last Update: 19th May 2023
+  Created By: Michael Haggart 
+  For: StarthAIS
+  Updated by: Michael Haggart 
+              #Add New Names Here
+*/
 
 #ifndef AISFCAccelerometer
 #define AISFCAccelerometer
@@ -24,6 +40,7 @@ char* convert_int16_to_str(int16_t i);   // converts int16 to string. Moreover, 
 void getSensors(Adafruit_MPU6050 mpu, Adafruit_Sensor* accelSens, Adafruit_Sensor* gyroSens, Adafruit_Sensor* tempSens);
 void printSensors(Adafruit_MPU6050 mpu);
 void setRange(Adafruit_MPU6050 mpu);
+void get_xya(const int address, float& x_accel,float& y_accel,float& z_accel);
 //int setFilLScaleAccelRange(MPU6050_ACCEL_FS_16);
 
 
@@ -75,6 +92,16 @@ void printSensors(const int address)
 	Serial.println(ac.acceleration.z);
 }
 
+void get_xya(const int address, float& x_accel,float& y_accel,float& z_accel)
+{
+  Wire.beginTransmission(address);
+	Wire.write(0x3B);                         // starting with register 0x3B (ACCEL_XOUT_H) [MPU-6000 and MPU-6050 Register Map and Descriptions Revision 4.2, p.40]
+	Wire.endTransmission(false);              // the parameter indicates that the Arduino will send a restart. As a result, the connection is kept active.
+	Wire.requestFrom(address, 7 * 2, true);  // request a total of 7*2=14 registers
+  x_accel = Wire.read() << 8 | Wire.read(); 
+  y_accel = Wire.read() << 8 | Wire.read(); 
+  z_accel = Wire.read() << 8 | Wire.read(); 
+}
 
 #endif
 

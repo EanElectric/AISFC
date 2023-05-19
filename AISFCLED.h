@@ -1,3 +1,19 @@
+/*
+  LED control header 
+
+  This header is to control any LED's we may wish to use.
+  Currently these are only really used for testing purposes.
+  However we may wish to use them for cabin lighting of the avionics bay. 
+  We may also find other uses for them in the future. 
+  
+  Created: 16th May 2023
+  Last Update: 19th May 2023
+  Created By: Michael Haggart 
+  For: StarthAIS
+  Updated by: Michael Haggart 
+              #Add New Names Here
+*/
+
 #ifndef AISFCLED
 #define AISFCLED
 
@@ -9,6 +25,9 @@
 int8_t megaPin1 = 9;
 int8_t megaPin2 = 8;
 int8_t megaPin3 = 10;
+
+
+
 Adafruit_NeoPixel megaAltitude(NUM_LEDS, megaPin1, COLOR_ORDER);
 Adafruit_NeoPixel megaStatus(NUM_LEDS, megaPin2, COLOR_ORDER);
 Adafruit_NeoPixel megaCabinLight(NUM_LEDS, megaPin3, COLOR_ORDER);

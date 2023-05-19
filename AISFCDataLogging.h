@@ -23,7 +23,7 @@
 #include <string.h>
 
 File dataLogInit(File &log);
-String loggedData(float millisecs, float pressure_bmp, float x_accel, float y_accel, float z_accel);
+String loggedData(float millisecs, float pressure_bmp, float alt, float x_accel, float y_accel, float z_accel, long latGPS, long longGPS);
 void writeEntry(String entry, File &log);
 
 File dataLogInit(File &log) {
@@ -50,9 +50,9 @@ File dataLogInit(File &log) {
   }
 }
 
-String loggedData(float millisecs, float pressure_bmp, float x_accel, float y_accel, float z_accel)
+String loggedData(float millisecs, float pressure_bmp, float alt, float x_accel, float y_accel, float z_accel, long latGPS, long longGPS)
 {
-  String data = String(millisecs)+","+String(pressure_bmp)+","+String(x_accel)+","+String(y_accel)+","+String(x_accel);
+  String data = String(millisecs)+","+String(pressure_bmp)+","+String(x_accel)+","+String(y_accel)+","+String(x_accel)+","+String(latGPS)+","+String(longGPS)+'\n';
   return data;
 }
 

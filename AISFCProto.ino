@@ -15,7 +15,6 @@
               #Add New Names Here
 */
 
-
 #include "AISFCGPS.h"
 #include "AISFCAccelerometer.h"
 #include "AISFCBarometer.h"
@@ -23,15 +22,13 @@
 #include "AISFCTelecoms.h"
 #include "AISFCDataLogging.h"
 
-
-
 Adafruit_MPU6050 mpu1;
 Adafruit_Sensor *mpu1_temp, *mpu1_accel, *mpu1_gyro;
 float x_accel1{}, y_accel1{}, z_accel1{};
 float timeSinceActivate{};
-float baroPressure{};
+float baroPressure{}, zAlt{};
 const int mpu1_address = 0x69;
-
+int32_t latGPS{}, longGPS{};
 
 SFE_UBLOX_GNSS NEO_M9;
 
@@ -51,18 +48,23 @@ void setup() {
   if (activateHardware()) {
     Serial.println("Hardware activated successfully");
   }
+  mpu1.getAccelerometerSensor();
   AISFCAccelerometer::getSensors(mpu1, mpu1_accel, mpu1_gyro, mpu1_temp);
   AISFCDataLogging::dataLogInit(dataLog);
+
+  zAlt = baro.zeroAlt();
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-  mpu1.getAccelerometerSensor();
+
   AISFCAccelerometer::printSensors(mpu1_address);
-  AISFCAccelerometer::get_xya(mpu1_address, x_accel1, y_accel1, z_accel1); 
+  AISFCAccelerometer::get_xya(mpu1_address, x_accel1, y_accel1, z_accel1);
   baroPressure = baro.getPressure();
+  latGPS = NEO_M9.getLatitude();
+  longGPS = NEO_M9.getLongitude();
   timeSinceActivate = millis();
-  String entry = AISFCDataLogging::loggedData(timeSinceActivate, baroPressure, x_accel1, y_accel1, z_accel1);
+  String entry = AISFCDataLogging::loggedData(timeSinceActivate, baroPressure, zAlt, x_accel1, y_accel1, z_accel1, longGPS, latGPS);
   AISFCDataLogging::writeEntry(entry, dataLog);
 }
 

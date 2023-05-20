@@ -23,7 +23,6 @@
 #include "AISFCDataLogging.h"
 
 enum flightStatus { preLaunch, Boost, Coast, Apogee, Drogue, Main, Landed };
-flightStatus curState = 0;
 
 Adafruit_MPU6050 mpu1;
 Adafruit_Sensor *mpu1_temp, *mpu1_accel, *mpu1_gyro;
@@ -33,13 +32,19 @@ float baroPressure{}, zAlt{}, baroAlt{};
 const int mpu1_address = 0x69;
 int32_t latGPS{}, longGPS{};
 
+#define drogueIgPin = uint8_t 3;
+#define mainIgPin = uint8_t 4;
+flightStatus activeFlightStatus = 0;
+
 SFE_UBLOX_GNSS NEO_M9;
 
 AISFCbaro baro;
 File dataLog;
 
 bool activateHardware();
-void stateCheck(flightStatus fS, float bAlt, float xAcc, float yAcc, float Zacc);
+void stateCheckFunc(flightStatus &fS, float bAlt, float xAcc, float yAcc, float Zacc);
+bool ignitionControl(bool safetyCheck, uint8_t pin, flightStatus fS);
+//bool safetyContol(float time, bool apogeeCheck); <- to be expanded
 
 void setup() {
   // put your setup code here, to run once:
@@ -64,11 +69,11 @@ void setup() {
   AISFCAccelerometer::getSensors(mpu1, mpu1_accel, mpu1_gyro, mpu1_temp);
   AISFCDataLogging::dataLogInit(dataLog);
   zAlt = baro.zeroAlt();
+
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-
   AISFCAccelerometer::printSensors(mpu1_address);
   AISFCAccelerometer::get_xya(mpu1_address, x_accel1, y_accel1, z_accel1);
   baroPressure = baro.getPressure();
@@ -77,7 +82,7 @@ void loop() {
   longGPS = NEO_M9.getLongitude();
   timeSinceActivate = millis();
   //milliseconds, pascals, meters, G's?, G's?, G's?, degrees, degrees
-  stateCheck(curState, baroAlt, x_accel1, y_accel1, z_accel1);
+  stateCheckFunc(activeFlightStatus, baroAlt, x_accel1, y_accel1, z_accel1);
   String entry = AISFCDataLogging::loggedData(timeSinceActivate, baroPressure, baroAlt, x_accel1, y_accel1, z_accel1, longGPS, latGPS);
   AISFCDataLogging::writeEntry(entry, dataLog);
 }
@@ -128,7 +133,17 @@ bool activateHardware() {
   }
 }
 
-void stateCheck(flightStatus& fS, float bAlt, float xAcc, float yAcc, float Zacc)
+void stateCheckFunc(flightStatus &fS, float bAlt, float xAcc, float yAcc, float Zacc)
 {
   
 }
+
+bool ignitionControl(bool safetyCheck, uint8_t pin, flightStatus fS)
+{
+
+}
+
+/*bool safetyContol(float time, bool apogeeCheck)
+{
+
+}*/

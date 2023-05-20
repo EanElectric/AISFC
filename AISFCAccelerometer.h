@@ -9,7 +9,7 @@
                     bool depChargeArm = true; }
   
   Created: 12th May 2023
-  Last Update: 19th May 2023
+  Last Update: 20th May 2023
   Created By: Michael Haggart 
   For: StarthAIS
   Updated by: Michael Haggart 
@@ -41,6 +41,7 @@ void getSensors(Adafruit_MPU6050 mpu, Adafruit_Sensor* accelSens, Adafruit_Senso
 void printSensors(Adafruit_MPU6050 mpu);
 void setRange(Adafruit_MPU6050 mpu);
 void get_xya(const int address, float& x_accel,float& y_accel,float& z_accel);
+float absoluteAcceleration(Adafruit_MPU6050 mpu);
 //int setFilLScaleAccelRange(MPU6050_ACCEL_FS_16);
 
 
@@ -101,6 +102,18 @@ void get_xya(const int address, float& x_accel,float& y_accel,float& z_accel)
   x_accel = Wire.read() << 8 | Wire.read(); 
   y_accel = Wire.read() << 8 | Wire.read(); 
   z_accel = Wire.read() << 8 | Wire.read(); 
+}
+
+float absoluteAcceleration(Adafruit_MPU6050 mpu)
+{
+  /*
+    I'm not sure how best to go about this. 
+    I think it's important to keep the direction of acceleration in mind to avoid 
+    any false possitives/negatives during changes of acceleration.
+    The concern is that I don't fully know what units the GY521 is giving. 
+    This any maths I perform could give an incorrect result. If I just go for sqrt(x^2+y^2+z^2)
+    then I worry that will make the FC blind to its actual current flight condition (falling, rising etc).
+  */
 }
 
 #endif

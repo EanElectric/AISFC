@@ -6,7 +6,7 @@
   The barometer will control deployment of shutes. This function has not been completed yet. 
   
   Created: 12th May 2023
-  Last Update: 19th May 2023
+  Last Update: 20th May 2023
   Created By: Michael Haggart 
   For: StarthAIS
   Updated by: Michael Haggart 
@@ -25,6 +25,7 @@ class AISFCbaro : public Adafruit_BMP085 {
 public:
   float calibrateBMP(bool& cs);
   float zeroAlt();
+  float curAlt(float zAlt);
   float getPressure();
   void readoutPressure();
   void readoutBMP();
@@ -57,6 +58,12 @@ float AISFCbaro::zeroAlt() {
   }
   float zAlt = totalAlt/50;
   return zAlt;
+}
+
+float AISFCbaro::curAlt(float zAlt)
+{
+  float alt = this->readAltitude() - zAlt;
+  return alt;
 }
 
 float AISFCbaro::getPressure() {

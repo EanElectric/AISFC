@@ -8,7 +8,7 @@
     **Pin outs may be different**
   
   Created: May 2023
-  Last Update: 20th May 2023
+  Last Update: 22th May 2023
   Created By: Michael Haggart 
   For: StarthAIS
   Updated by: Michael Haggart 
@@ -22,18 +22,25 @@
 #include "AISFCTelecoms.h"
 #include "AISFCDataLogging.h"
 
-enum flightStatus { preLaunch, Boost, Coast, Apogee, Drogue, Main, Landed };
+enum flightStatus { preLaunch,
+                    Boost,
+                    Coast,
+                    Apogee,
+                    Drogue,
+                    Main,
+                    Landed };
 
 Adafruit_MPU6050 mpu1;
 Adafruit_Sensor *mpu1_temp, *mpu1_accel, *mpu1_gyro;
 float x_accel1{}, y_accel1{}, z_accel1{};
 float timeSinceActivate{};
-float baroPressure{}, zAlt{}, baroAlt{};
+float baroPressure{}, zAlt{}, baroAlt{}, baroAltFeet{};
 const int mpu1_address = 0x69;
 int32_t latGPS{}, longGPS{};
-
-#define drogueIgPin = uint8_t 3;
-#define mainIgPin = uint8_t 4;
+int sampleCountAscCheck{};
+float apogeeAlt{};
+#define drogueIgPin 3
+#define mainIgPin 4
 flightStatus activeFlightStatus = 0;
 
 SFE_UBLOX_GNSS NEO_M9;
@@ -42,13 +49,18 @@ AISFCbaro baro;
 File dataLog;
 
 bool activateHardware();
-void stateCheckFunc(flightStatus &fS, float bAlt, float xAcc, float yAcc, float Zacc);
+void stateCheckFunc(flightStatus& fS, float bAlt, float xAcc, float yAcc, float Zacc);
 bool ignitionControl(bool safetyCheck, uint8_t pin, flightStatus fS);
+bool descendingCheck(int& sampleCount, float& apogeeAlt, float cAlt);
+bool apogeeCheck = false;
 //bool safetyContol(float time, bool apogeeCheck); <- to be expanded
 
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(115200);
+  digitalWrite(drogueIgPin, LOW);  // Set Drogue activation pin to Low
+  digitalWrite(mainIgPin, LOW);    // Set Main activation pin to High
+
   Serial.println("Test bed for Arduino Flight Computer");
   if (!activateHardware()) {
     Serial.println("Not all hardware activated successfully, check terminal log for failed device");
@@ -69,18 +81,28 @@ void setup() {
   AISFCAccelerometer::getSensors(mpu1, mpu1_accel, mpu1_gyro, mpu1_temp);
   AISFCDataLogging::dataLogInit(dataLog);
   zAlt = baro.zeroAlt();
-
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
   AISFCAccelerometer::printSensors(mpu1_address);
   AISFCAccelerometer::get_xya(mpu1_address, x_accel1, y_accel1, z_accel1);
+
   baroPressure = baro.getPressure();
   baroAlt = baro.curAlt(zAlt);
+  if (apogeeCheck == false) {
+    apogeeCheck = descendingCheck(sampleCountAscCheck, apogeeAlt, baroAlt);
+  }
+  Serial.print("Highest Alt: ");
+  Serial.println(apogeeAlt);
+  baroAltFeet = baro.mtoFeet(baroAlt);
+  Serial.print("Current Alt in Feed: ");
+  Serial.println(baroAltFeet);
+
   latGPS = NEO_M9.getLatitude();
   longGPS = NEO_M9.getLongitude();
   timeSinceActivate = millis();
+
   //milliseconds, pascals, meters, G's?, G's?, G's?, degrees, degrees
   stateCheckFunc(activeFlightStatus, baroAlt, x_accel1, y_accel1, z_accel1);
   String entry = AISFCDataLogging::loggedData(timeSinceActivate, baroPressure, baroAlt, x_accel1, y_accel1, z_accel1, longGPS, latGPS);
@@ -133,15 +155,31 @@ bool activateHardware() {
   }
 }
 
-void stateCheckFunc(flightStatus &fS, float bAlt, float xAcc, float yAcc, float Zacc)
-{
-  
+void stateCheckFunc(flightStatus& fS, float bAlt, float xAcc, float yAcc, float Zacc) {
 }
 
-bool ignitionControl(bool safetyCheck, uint8_t pin, flightStatus fS)
-{
-
+bool ignitionControl(bool apogeeCheck, uint8_t pin, flightStatus fS) {
 }
+
+bool descendingCheck(int& sampleCount, float& apogeeAlt, float cAlt) {
+  if ((apogeeAlt - cAlt) >= 1)  //if current alt is lower than 1 meter below apogee
+  {
+    sampleCount = sampleCount + 1;  //counter increments
+    apogeeAlt = cAlt;               //apogee = current alt
+    if (sampleCount == 15)          //if 15 counts are sucessful return true;
+    {
+      return true;
+    }
+    return false;
+  }
+  if ((apogeeAlt - cAlt) < 1)  //if current alt is greater than 1 meter above apogee
+  {
+    apogeeAlt = apogeeAlt;  //apogee
+    sampleCount = 0;
+    return false;
+  }
+}
+
 
 /*bool safetyContol(float time, bool apogeeCheck)
 {

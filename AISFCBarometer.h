@@ -6,7 +6,7 @@
   The barometer will control deployment of shutes. This function has not been completed yet. 
   
   Created: 12th May 2023
-  Last Update: 20th May 2023
+  Last Update: 22th May 2023
   Created By: Michael Haggart 
   For: StarthAIS
   Updated by: Michael Haggart 
@@ -26,10 +26,11 @@ public:
   float calibrateBMP(bool& cs);
   float zeroAlt();
   float curAlt(float zAlt);
+  float mtoFeet(float cAlt);
   float getPressure();
   void readoutPressure();
   void readoutBMP();
-  float startingAlt{};
+  bool AscendingDecendingCheck(float cAlt, float pAlt);
 };
 
 float AISFCbaro::calibrateBMP(bool& cs) {
@@ -66,10 +67,15 @@ float AISFCbaro::curAlt(float zAlt)
   return alt;
 }
 
+float AISFCbaro::mtoFeet(float cAlt)
+{
+  float cAltFeet = cAlt / 0.3048;
+  return cAltFeet;
+}
+
 float AISFCbaro::getPressure() {
   return this->readPressure();
 }
-
 
 void AISFCbaro::readoutPressure() {
   Serial.print("Pressure: ");
@@ -100,6 +106,20 @@ void AISFCbaro::readoutBMP() {
   Serial.print(this->readAltitude(101500));
   Serial.println(" meters");
   Serial.println();
+}
+
+bool AscendingDecendingCheck(float cAlt, float pAlt)
+{
+  bool Ascending = true; //if true, current alt is greater than previous alt, if false, inverse.
+  if(cAlt > pAlt)
+  {
+    Ascending = false; 
+    return Ascending;
+  }
+  else
+  {
+    return Ascending;
+  }
 }
 
 #endif

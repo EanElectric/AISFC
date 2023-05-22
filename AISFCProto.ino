@@ -38,7 +38,8 @@ float baroPressure{}, zAlt{}, baroAlt{}, baroAltFeet{};
 const int mpu1_address = 0x69;
 int32_t latGPS{}, longGPS{};
 int sampleCountAscCheck{};
-float apogeeAlt{};
+float apogeeAlt{}; 
+float absoluteAccel{};
 #define drogueIgPin 3
 #define mainIgPin 4
 flightStatus activeFlightStatus = 0;
@@ -50,9 +51,10 @@ File dataLog;
 
 bool activateHardware();
 void stateCheckFunc(flightStatus& fS, bool apogeeCheck, bool motorCheck, bool accelCheck);
-bool ignitionControl(bool safetyCheck, uint8_t pin, flightStatus fS);
+void ignitionControl(bool apogeeCheck, uint8_t pin, flightStatus fS);
 bool descendingCheck(int& sampleCount, float& apogeeAlt, float cAlt);
 bool apogeeCheck = false;
+bool motorCheck = false;
 //bool safetyContol(float time, bool apogeeCheck); <- to be expanded
 
 void setup() {
@@ -87,12 +89,14 @@ void loop() {
   // put your main code here, to run repeatedly:
   AISFCAccelerometer::printSensors(mpu1_address);
   AISFCAccelerometer::get_xya(mpu1_address, x_accel1, y_accel1, z_accel1);
-
+  absoluteAccel = AISFCAccelerometer::absoluteAcceleration();
+  motorCheck = AISFCAccelerometer::motorCheckFunction(absoluteAccel);
   baroPressure = baro.getPressure();
   baroAlt = baro.curAlt(zAlt);
   if (apogeeCheck == false) {
     apogeeCheck = descendingCheck(sampleCountAscCheck, apogeeAlt, baroAlt);
   }
+  
   Serial.print("Highest Alt: ");
   Serial.println(apogeeAlt);
   baroAltFeet = baro.mtoFeet(baroAlt);
@@ -157,13 +161,58 @@ bool activateHardware() {
   }
 }
 
-void stateCheckFunc(flightStatus& fS, bool apogeeCheck, bool motorCheck, bool accelCheck) {
-
+int stateCheckFunc(flightStatus& fS, bool apogeeCheck, bool motorCheck, float curAlt) 
+{
+  //The motorCheck is bool derived from the current acceleration of the rocket. If it is above some threshhold, then the motor is currently firing
+  //If this is true, then the rocket is in its boost phase
+  //If this is false && apogeeCheck is false, the rocket is in its Coast phase. 
+  if(apogeeCheck == false && motorCheck == false && curAlt <= 50)
+  {
+    fS = preLaunch;
+    return 0;
+  }
+  if(apogeeCheck == false && motorCheck == true && curAlt >= 10)
+  {
+    fS = Boost; 
+    return 1;
+  }
+  if(apogeeCheck == false && motorCheck == false && curAlt >= 100)
+  {
+    fS = Coast;
+    return 2;
+  }
+  if(apogeeCheck == true && motorCheck == false && curAlt >= 2000)
+  {
+    fS = Apogee;
+    return 3;
+  }
+  //if(apogeeCheck )
 }
 
-bool ignitionControl(bool apogeeCheck, uint8_t pin, flightStatus fS) 
-{
-  
+void ignitionControl(bool apogeeCheck, uint8_t pin, flightStatus fS) {
+  switch (fS) {
+    case 0:       //<- preLaunch
+
+      break;
+    case 1:       //Boost
+
+      break;
+    case 2:       //Coast
+
+      break;
+    case 3:       //Apogee
+    //the change from coast to apogee to drogue should be very short as the drogue should deploy once the apogee is confirmed
+      break;
+    case 4:       //Drogue
+      digitalWrite(drogueIgPin, HIGH);  // Fire the Drogue
+      break;
+    case 5:       //Main
+      digitalWrite(mainIgPin, HIGH);    // Fire the Main
+      break;
+    case 6:       //Landed
+
+      break;
+  }
 }
 
 bool descendingCheck(int& sampleCount, float& apogeeAlt, float cAlt) {

@@ -41,7 +41,8 @@ void getSensors(Adafruit_MPU6050 mpu, Adafruit_Sensor* accelSens, Adafruit_Senso
 void printSensors(Adafruit_MPU6050 mpu);
 void setRange(Adafruit_MPU6050 mpu);
 void get_xya(const int address, float& x_accel,float& y_accel,float& z_accel);
-float absoluteAcceleration(Adafruit_MPU6050 mpu);
+float absoluteAcceleration();
+bool motorCheckFunction(float absoluteAccel);
 //int setFilLScaleAccelRange(MPU6050_ACCEL_FS_16);
 
 
@@ -102,6 +103,9 @@ void get_xya(const int address, float& x_accel,float& y_accel,float& z_accel)
   x_accel = Wire.read() << 8 | Wire.read(); 
   y_accel = Wire.read() << 8 | Wire.read(); 
   z_accel = Wire.read() << 8 | Wire.read(); 
+  x_accel = ((float)x_accel / 2048)*9.806;;      //<- -/+16g = 2048 LSB/g * 9.806 for m/s^2
+  y_accel = ((float)y_accel / 2048)*9.806;;      //<- -/+16g = 2048 LSB/g * 9.806 for m/s^2
+  z_accel = ((float)z_accel / 2048)*9.806;;      //<- -/+16g = 2048 LSB/g * 9.806 for m/s^2 
 }
 
 float absoluteAcceleration()
@@ -122,8 +126,25 @@ float absoluteAcceleration()
   float y_accel = Wire.read() << 8 | Wire.read(); 
   float z_accel = Wire.read() << 8 | Wire.read(); 
 
-  float absoluteAccel = sqrt((x_accel*x_accel) + (y_accel*y_accel) + (z_accel*z_accel));
+  float x_accel_g = ((float)x_accel / 2048)*9.806;      //<- -/+16g = 2048 LSB/g * 9.806 for m/s^2
+  float y_accel_g = ((float)y_accel / 2048)*9.806;      //<- -/+16g = 2048 LSB/g * 9.806 for m/s^2
+  float z_accel_g = ((float)z_accel / 2048)*9.806;      //<- -/+16g = 2048 LSB/g * 9.806 for m/s^2
+
+  float absoluteAccel = sqrt((x_accel_g*x_accel_g) + (y_accel_g*y_accel_g) + (z_accel_g*z_accel_g));
   return absoluteAccel;
+}
+
+bool motorCheckFunction(float absoluteAccel)
+{
+  bool motorCheck = false;
+  if(absoluteAccel > 15)
+  {
+    return motorCheck = true;
+  }
+  else
+  {
+    return motorCheck = false;
+  }
 }
 
 #endif

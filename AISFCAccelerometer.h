@@ -104,7 +104,7 @@ void get_xya(const int address, float& x_accel,float& y_accel,float& z_accel)
   z_accel = Wire.read() << 8 | Wire.read(); 
 }
 
-float absoluteAcceleration(Adafruit_MPU6050 mpu)
+float absoluteAcceleration()
 {
   /*
     I'm not sure how best to go about this. 
@@ -114,6 +114,16 @@ float absoluteAcceleration(Adafruit_MPU6050 mpu)
     This any maths I perform could give an incorrect result. If I just go for sqrt(x^2+y^2+z^2)
     then I worry that will make the FC blind to its actual current flight condition (falling, rising etc).
   */
+  Wire.beginTransmission(0x69);
+	Wire.write(0x3B);                         // starting with register 0x3B (ACCEL_XOUT_H) [MPU-6000 and MPU-6050 Register Map and Descriptions Revision 4.2, p.40]
+	Wire.endTransmission(false);              // the parameter indicates that the Arduino will send a restart. As a result, the connection is kept active.
+	Wire.requestFrom(0x69, 7 * 2, true);  // request a total of 7*2=14 registers
+  float x_accel = Wire.read() << 8 | Wire.read(); 
+  float y_accel = Wire.read() << 8 | Wire.read(); 
+  float z_accel = Wire.read() << 8 | Wire.read(); 
+
+  float absoluteAccel = sqrt((x_accel*x_accel) + (y_accel*y_accel) + (z_accel*z_accel));
+  return absoluteAccel;
 }
 
 #endif

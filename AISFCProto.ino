@@ -49,7 +49,7 @@ AISFCbaro baro;
 File dataLog;
 
 bool activateHardware();
-void stateCheckFunc(flightStatus& fS, float bAlt, float xAcc, float yAcc, float Zacc);
+void stateCheckFunc(flightStatus& fS, bool apogeeCheck, bool motorCheck, bool accelCheck);
 bool ignitionControl(bool safetyCheck, uint8_t pin, flightStatus fS);
 bool descendingCheck(int& sampleCount, float& apogeeAlt, float cAlt);
 bool apogeeCheck = false;
@@ -103,8 +103,10 @@ void loop() {
   longGPS = NEO_M9.getLongitude();
   timeSinceActivate = millis();
 
+  //void stateCheckFunc(flightStatus& fS, bool apogeeCheck, bool motorCheck, bool accelCheck);
+
+
   //milliseconds, pascals, meters, G's?, G's?, G's?, degrees, degrees
-  stateCheckFunc(activeFlightStatus, baroAlt, x_accel1, y_accel1, z_accel1);
   String entry = AISFCDataLogging::loggedData(timeSinceActivate, baroPressure, baroAlt, x_accel1, y_accel1, z_accel1, longGPS, latGPS);
   AISFCDataLogging::writeEntry(entry, dataLog);
 }
@@ -155,10 +157,13 @@ bool activateHardware() {
   }
 }
 
-void stateCheckFunc(flightStatus& fS, float bAlt, float xAcc, float yAcc, float Zacc) {
+void stateCheckFunc(flightStatus& fS, bool apogeeCheck, bool motorCheck, bool accelCheck) {
+
 }
 
-bool ignitionControl(bool apogeeCheck, uint8_t pin, flightStatus fS) {
+bool ignitionControl(bool apogeeCheck, uint8_t pin, flightStatus fS) 
+{
+  
 }
 
 bool descendingCheck(int& sampleCount, float& apogeeAlt, float cAlt) {

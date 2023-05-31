@@ -1,4 +1,4 @@
-﻿/*
+/*
   Data Logging Header
 
   This header file defines a functions we may wish to use for data logging purposes.
@@ -12,8 +12,9 @@
   Created By: Michael Haggart
   For: StarthAIS
   Updated by: Michael Haggart
-			  #Add New Names Here
+			  Leon Yip 31-05-23
 */
+
 
 #ifndef AISFCGPS
 #define AISFCGPS
@@ -41,9 +42,8 @@ bool initGPS(SFE_UBLOX_GNSS AISFCgps)
 {
 	if (!AISFCgps.begin())
 	{
-		Serial.println(F("u-blox GNSS not detected at default I2C address. Please check wiring. Freezing."));
-		while (1);
-		return false;
+		// Serial.println(F("u-blox GNSS not detected at default I2C address. Please check wiring. GPS Inactive")); <- Commented for the time being, should be uncommented once GPS hardware is fixed
+    return false;
 	}
 	AISFCgps.setI2COutput(COM_TYPE_UBX | COM_TYPE_NMEA); //Set the I2C port to output both NMEA and UBX messages
 	AISFCgps.saveConfigSelective(VAL_CFG_SUBSEC_IOPORT); //Save (only) the communications port settings to flash and BBR
@@ -61,12 +61,13 @@ bool updateGPS(SFE_UBLOX_GNSS AISFCgps, long& lat_mdeg, long& long_mdeg, long& g
 		{
 			lat_mdeg = nmea.getLatitude();
 			long_mdeg = nmea.getLongitude();
-			gnss_alt = nmea.getAlt_long();  // <- WARNING this function is custom added by Mike 24th May 2023
+			//gnss_alt = nmea.getAlt_long();  // <- WARNING this function is custom added by Mike 24th May 2023
 			nmea.clear();
 			return true;
 		}
 		else
 		{
+      Serial.println("Test6");
 			return false;
 		}
 	}

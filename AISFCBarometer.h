@@ -38,7 +38,7 @@ float AISFCbaro::zeroAlt()
 	float totalAlt{};
 	for (int i = 0; i < 50; i++) 
 	{
-		totalAlt = +this->readAltitude();
+		totalAlt += this->readAltitude();
 	}
 	float zAlt = totalAlt / 50;
 	return zAlt;

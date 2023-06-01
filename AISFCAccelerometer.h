@@ -36,18 +36,22 @@ void get_xya(const int address, float& x_accel, float& y_accel, float& z_accel)
     x_accel = Wire.read() << 8 | Wire.read();
     y_accel = Wire.read() << 8 | Wire.read();
     z_accel = Wire.read() << 8 | Wire.read();
-    x_accel = ((float)x_accel / 2048) * 9.806;;      //<- -/+16g = 2048 LSB/g * 9.806 for m/s^2
-    y_accel = ((float)y_accel / 2048) * 9.806;;      //<- -/+16g = 2048 LSB/g * 9.806 for m/s^2
-    z_accel = ((float)z_accel / 2048) * 9.806;;      //<- -/+16g = 2048 LSB/g * 9.806 for m/s^2 
+    x_accel = ((float)x_accel / 2048);      //<- Measured in g
+    y_accel = ((float)y_accel / 2048);      //<- Measured in g
+    if (z_accel >= 0) {
+      z_accel = (float)z_accel / (2048*0.77);
+    } else {
+      z_accel = (float)z_accel / (2048*1.28);
+    } 
 }
 //
 //
 float absoluteAcceleration(float x_accel, float y_accel, float z_accel)
 {
-    float x_accel_g = (x_accel / 2048) * 9.806;      //<- -/+16g = 2048 LSB/g * 9.806 for m/s^2
-    float y_accel_g = (y_accel / 2048) * 9.806;      //<- -/+16g = 2048 LSB/g * 9.806 for m/s^2
-    float z_accel_g = (z_accel / 2048) * 9.806;      //<- -/+16g = 2048 LSB/g * 9.806 for m/s^2
-    float absoluteAccel = sqrt((x_accel_g * x_accel_g) + (y_accel_g * y_accel_g) + (z_accel_g * z_accel_g));
+    // float x_accel_g = (x_accel / 2048);      //<- -/+16g = 2048 LSB/g * 9.806 for m/s^2
+    // float y_accel_g = (y_accel / 2048);      //<- -/+16g = 2048 LSB/g * 9.806 for m/s^2
+    // float z_accel_g = (z_accel / 2048);      //<- -/+16g = 2048 LSB/g * 9.806 for m/s^2
+    float absoluteAccel = sqrt((x_accel * x_accel) + (y_accel * y_accel) + (z_accel * z_accel));
     return absoluteAccel;
 }
 //

@@ -153,6 +153,11 @@ void loop() {
   {
     highest_Alt = current_Alt;
   }
+  else
+  {
+    highest_Alt = highest_Alt; 
+  }
+  
   if (apogeeCheck_Flag == false)  // <- if we haven't hit the apogee, check if reached
   {
     apogeeCheck_Flag = descendingCheck(baroSampleCount, highest_Alt, current_Alt);  // <- check if apogee has been hit
@@ -179,10 +184,31 @@ void loop() {
   if((timeSinceActive - time_update) > 1000) {  // <- Prints stats every second
     Serial.print("Time (ms): ");
     Serial.println(timeSinceActive);
-    Serial.print("Acceleration (unit???): ");
+    Serial.print("Acceleration (g): ");
     Serial.println(AISFCAccel_Mag);
-    Serial.print("Altitude (unit???): ");
+    Serial.print("Altitude (m (AGL)???): ");
     Serial.println(current_Alt);
+    Serial.print("Highest Altitude (m (AGL)???): ");
+    Serial.println(highest_Alt);
+
+    Serial.print("X accel: ");
+    Serial.println(accel_x);
+    Serial.print("Y accel: ");
+    Serial.println(accel_y);
+    Serial.print("Z accel: ");
+    Serial.println(accel_z);
+
+    Serial.print("Motor Active: ");
+    Serial.println(motorCheck_Flag);
+    Serial.print("Apogee Check: ");
+    Serial.println(apogeeCheck_Flag);
+    Serial.print("Drogue Deploy: ");
+    Serial.println(drogueDep_Flag);
+    Serial.print("Main Deploy: ");
+    Serial.println(mainDep_Flag);
+
+    Serial.print("Flight Status: ");
+    Serial.println(currentFS);
     time_update += 1000;
   }
 
@@ -202,6 +228,9 @@ bool activateHardware() {
           accel_Flag = false;
         } else {
           Serial.println("Accelerometer Activated");
+          AISFC_Accel.setAccelerometerRange(MPU6050_RANGE_16_G);
+          AISFC_Accel.setGyroRange(MPU6050_RANGE_250_DEG);
+          AISFC_Accel.setFilterBandwidth(MPU6050_BAND_21_HZ);
           accel_Flag = true;
         }
         continue;

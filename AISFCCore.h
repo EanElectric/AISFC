@@ -29,25 +29,25 @@ enum flightStatus
 };
 //
 //
-bool descendingCheck(int& sampleCount, float& apogeeAlt, float cAlt);
+bool descendingCheck(int& sampleCount, float highest_Alt, float cAlt);
 bool motorCheckFunction(int& accelSampleCount, float absoluteAccel);
 flightStatus stateCheckFunc(flightStatus& fS, float timeSinceLaunch, bool apogeeCheck, bool drogueDep, bool mainDep, bool motorCheck, float highestAlt, float curAlt);
 //
 //
-bool descendingCheck(int& sampleCount, float& apogeeAlt, float cAlt) {
-    if ((apogeeAlt - cAlt) >= 1)  //if current alt is lower than 1 meter below apogee
+bool descendingCheck(int& sampleCount, float highest_Alt, float cAlt) {
+    if ((highest_Alt - cAlt) >= 1)  //if current alt is lower than 20 meter below apogee
     {
         sampleCount = sampleCount + 1;  //counter increments
-        apogeeAlt = cAlt;               //apogee = current alt
+        highest_Alt = cAlt;               //apogee = current alt
         if (sampleCount == 15)          //if 15 counts are sucessful return true;
         {
             return true;
         }
         return false;
     }
-    if ((apogeeAlt - cAlt) < 1)  //if current alt is greater than 1 meter above apogee
+    if ((highest_Alt - cAlt) < 1)  //if current alt is greater than 1 meter above apogee
     {
-        apogeeAlt = apogeeAlt;  //apogee
+        highest_Alt = highest_Alt;  //apogee
         sampleCount = 0;
         return false;
     }
@@ -57,7 +57,7 @@ bool descendingCheck(int& sampleCount, float& apogeeAlt, float cAlt) {
 bool motorCheckFunction(int& accelSampleCount, float absoluteAccel)
 {
     bool motorCheck = false;
-    if (absoluteAccel > 15)
+    if (absoluteAccel > 1.2)
     {
         accelSampleCount = accelSampleCount + 1;
         if (accelSampleCount == 5)
@@ -83,27 +83,26 @@ flightStatus stateCheckFunc(flightStatus& fS, float timeSinceLaunch, bool apogee
     {
         return fS = flightStatus::preLaunch;
     }
-    if (apogeeCheck == false && motorCheck == true && drogueDep == false && mainDep == false && highestAlt >= 0 && curAlt >= 10)
-    {
+    if (fS == 0 && apogeeCheck == false && motorCheck == true && drogueDep == false && mainDep == false && highestAlt >= 0 && curAlt >= 0){
         return fS = flightStatus::Boost;
     }
-    if (apogeeCheck == false && motorCheck == true && drogueDep == false && mainDep == false && highestAlt >= 0 && curAlt >= 100)
+    if (fS == 1 && apogeeCheck == false && motorCheck == true && drogueDep == false && mainDep == false && highestAlt >= 0 && curAlt >= 2)
     {
         return fS = flightStatus::Coast;
     }
-    if (apogeeCheck == true && motorCheck == true && drogueDep == false && mainDep == false && highestAlt >= 0 && curAlt >= 3000)
+    if (fS == 2 && apogeeCheck == true && motorCheck == true && drogueDep == false && mainDep == false && highestAlt >= 0 && curAlt >= 6)
     {
         return fS = flightStatus::Apogee;
     }
-    if (apogeeCheck == true && motorCheck == true && drogueDep == true && mainDep == false && highestAlt >= curAlt && curAlt >= 2000)
+    if (fS == 3 && apogeeCheck == true && motorCheck == true && drogueDep == true && mainDep == false && highestAlt >= curAlt && curAlt >= 5)
     {
         return fS = flightStatus::Drogue;
     }
-    if (apogeeCheck == true && motorCheck == true && drogueDep == true && mainDep == false && highestAlt >= curAlt && (curAlt >= 400 || curAlt <=500))
+    if (fS == 4 && apogeeCheck == true && motorCheck == true && drogueDep == true && mainDep == false && highestAlt >= curAlt && (curAlt >= 0.5 || curAlt <=3))
     {
         return fS = flightStatus::Main;
     }
-    if (apogeeCheck == true && motorCheck == true && drogueDep == true && mainDep == true && highestAlt >= curAlt && curAlt <= 50)
+    if (fS == 5 && apogeeCheck == true && motorCheck == true && drogueDep == true && mainDep == true && highestAlt >= curAlt && curAlt <= 0.5)
     {
         return fS = flightStatus::Landed;
     }
@@ -115,7 +114,7 @@ flightStatus stateCheckFunc(flightStatus& fS, float timeSinceLaunch, bool apogee
     {
         return fS = fS;
     }
-}
+  }
 //
 //
 #endif // !AISFCCore

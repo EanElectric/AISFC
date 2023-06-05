@@ -55,27 +55,22 @@ bool initGPS(SFE_UBLOX_GNSS AISFCgps)
 //
 bool updateGPS(SFE_UBLOX_GNSS AISFCgps, long& lat_mdeg, long& long_mdeg, long& gnss_alt)
 {
-	if (AISFCgps.checkUblox())
-	{
-		if (nmea.isValid())
-		{
-			lat_mdeg = nmea.getLatitude();
-			long_mdeg = nmea.getLongitude();
-			//gnss_alt = nmea.getAlt_long();  // <- WARNING this function is custom added by Mike 24th May 2023
-			nmea.clear();
-			return true;
-		}
-		else
-		{
-      Serial.println("Test6");
-			return false;
-		}
-	}
-	else
-	{
+
+	AISFCgps.checkUblox();
+
+  if (nmea.isValid())
+  {
+    lat_mdeg = nmea.getLatitude();
+    long_mdeg = nmea.getLongitude();
+    //gnss_alt = nmea.getAlt_long();  // <- WARNING this function is custom added by Mike 24th May 2023
+    //nmea.clear();
+    return true;
+  }
+  else
+  {
 		Serial.println("Waiting for fresh GPS data");
-		return false;
-	}
+    return false;
+  }
 }
 //
 //

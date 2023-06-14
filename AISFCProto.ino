@@ -23,6 +23,10 @@
 #include "RTClib.h"
 //
 //
+#include "MemoryFree.h"
+#include "pgmStrToRAM.h"
+//
+//
 #define drogueIgGate 42
 #define drogueIgDrain 43
 
@@ -135,8 +139,8 @@ void setup() {
   tone(buzzer, 500);
   delay(250);
   noTone(buzzer);
-  Serial.begin(9600);
-
+  Serial.begin(115200);
+  Wire.begin();
   digitalWrite(drogueIgGate, HIGH);  //<- gate HIGH & drain LOW = no activation: for testing this should be blue1
   digitalWrite(drogueIgDrain, LOW);
 
@@ -152,7 +156,6 @@ void setup() {
   } else {
     Serial.println("Hardware Activated Successfully");
   }
-
   AISFC_Accel.getAccelerometerSensor();
   /*~~ SD CARD Prototype~~*/
   SD.begin(CSpin);
@@ -168,7 +171,6 @@ void setup() {
 void loop() {
   // put your main code here, to run repeatedly:
   timeSinceActive = millis();  // <- get time since activation
-
   /*~~Accelerometer Actions~~*/
   AISFCAccelerometer::get_xya(AISFCAccel_Address1, accel_x, accel_y, accel_z);           // <- get the xyz accelerations
   AISFCAccel_Mag = AISFCAccelerometer::absoluteAcceleration(accel_x, accel_y, accel_z);  // <- create absolute acceleration
@@ -176,40 +178,47 @@ void loop() {
   {
     motorCheck_Flag = motorCheckFunction(accelSampleCount, AISFCAccel_Mag);  // <- check if rocket is accelerating due to motorburn //I want to gang this to thermistor but prob too late now
   }
-
+  Serial.println("Accel done");
   /*~~Barometer Actions~~*/
   current_Alt = AISFC_Baro.curAlt(zero_Alt);  // <- update current altitude
   baroPressure = AISFC_Baro.readPressure();
+  Serial.println("Baro done");
   if (highest_Alt < current_Alt)  // <- if the highest altitude is lower than the current altitude, update highest alt
   {
     highest_Alt = current_Alt;
   } else {
     highest_Alt = highest_Alt;
   }
-
   if (apogeeCheck_Flag == false)  // <- if we haven't hit the apogee, check if reached
   {
     apogeeCheck_Flag = descendingCheck(baroSampleCount, highest_Alt, current_Alt);  // <- check if apogee has been hit
   }
-
   //Final Action of Current Loop, set current flight status, and if that's changed, update action
   currentFS = stateCheckFunc(currentFS, timeSinceActive, apogeeCheck_Flag, drogueDep_Flag, mainDep_Flag, motorCheck_Flag, highest_Alt, current_Alt);
   if (currentFS != prevFS) {
     fsAction(currentFS);
   }
-
+  Serial.println("Current state check done");
   /*~~GPS Actions~~*/
-
-  if (AISFCGPS::updateGPS(AISFC_gps, nmea, lat_mdeg, long_mdeg, gnss_alt))  // <- if GPS has a fresh update, re-calculate distance and bearing from launch. [Leon]: If GPS was not active then updateGPS() would restart the whole sketch
-  {
-    AISFCGPS::distance_bearingGPS(launch_Lat, launch_Long, lat_mdeg, long_mdeg);
-    AISFCGPS::getTimeGPS(AISFC_gps, gps_Year, gps_Month, gps_Day, gps_Hour, gps_Minute, gps_Second);
-  }
-
-
+  // AISFC_gps.checkUblox(); 
+  // Serial.println("Ublox check done");
+  // if (nmea.isValid()) 
+  // {
+  //   lat_mdeg = nmea.getLatitude();
+  //   long_mdeg = nmea.getLongitude();
+  //   Serial.println("lat long check done");
+  // } 
+  // else 
+  // {
+  //   Serial.println("Waiting for fresh GPS data");
+  //   nmea.clear();
+  // }
+  //AISFCGPS::distance_bearingGPS(launch_Lat, launch_Long, lat_mdeg, long_mdeg);
+  //AISFCGPS::getTimeGPS(AISFC_gps, gps_Year, gps_Month, gps_Day, gps_Hour, gps_Minute, gps_Second);
+  //Serial.println("time check done");
   //End of current Loop, prepare for next loop
   prevFS = currentFS;
-
+  Serial.println("Cur state check updated");
   // if ((timeSinceActive - time_update) > 1000) {  // <- Prints stats every second
   // 	Serial.print("Time (ms): ");
   // 	Serial.println(timeSinceActive);
@@ -240,18 +249,35 @@ void loop() {
   // 	Serial.println(currentFS);
   // 	time_update += 1000;
   // }
-
-  //String loggedData(float millisecs, float pressure_bmp, float alt, float x_accel, float y_accel, float z_accel, long latGPS, long longGPS)
-  String log = loggedData(timeSinceActive, baroPressure, current_Alt, accel_x, accel_y, accel_z, lat_mdeg, long_mdeg);
-  testFile.println(log);
-  Serial.println(log);
+  Serial.print(timeSinceActive);
+  Serial.print(", ");
+    Serial.print(baroPressure);
+  Serial.print(", ");
+    Serial.print(current_Alt);
+  Serial.print(", ");
+    Serial.print(accel_x);
+  Serial.print(", ");
+    Serial.print(accel_y);
+  Serial.print(", ");
+    Serial.print(accel_z);
+  Serial.print(", ");
+      Serial.print(lat_mdeg);
+  Serial.print(", ");
+      Serial.println(long_mdeg);
+  // String log = loggedData(timeSinceActive, baroPressure, current_Alt, accel_x, accel_y, accel_z, lat_mdeg, long_mdeg);
+  // //testFile.println(log);
+  // Serial.println(log);
+  //nmea.clear();
+  //Serial.println(freeMemory());  // print how much RAM is available in bytes.
+  //delay(2000);
+  //freeMemory();
 }
 //
 //
 bool activateHardware() {
   //AISFCAccel
   bool accel_Flag{}, baro_Flag{}, altInd_Flag{}, statusInd_Flag{}, gps_Flag{};
-  for (int i = 0; i < 4; i++)  //i < n, where n = number of components used
+  for (int i = 0; i < 3; i++)  //i < n, where n = number of components used
   {
     switch (i) {
       case 0:
@@ -303,24 +329,25 @@ bool activateHardware() {
           Serial.println("GPS failed to activate");
           gps_Flag = false;
         }
-        AISFC_gps.checkUblox();
+
         AISFC_gps.setI2COutput(COM_TYPE_UBX | COM_TYPE_NMEA);     //Set the I2C port to output both NMEA and UBX messages
         AISFC_gps.saveConfigSelective(VAL_CFG_SUBSEC_IOPORT);     //Save (only) the communications port settings to flash and BBR
         AISFC_gps.setProcessNMEAMask(SFE_UBLOX_FILTER_NMEA_ALL);  // Make sure the library is passing all NMEA messages to processNMEA
         AISFC_gps.setProcessNMEAMask(SFE_UBLOX_FILTER_NMEA_GGA);  // Or, we can be kind to MicroNMEA and _only_ pass the GGA messages to it
-        int i = 0;
+        AISFC_gps.setMeasurementRate(500);
+        AISFC_gps.setI2CpollingWait(25);
+        AISFC_gps.checkUblox();
         if (nmea.isValid() == false) {
-          Serial.print(i + ": ");
           Serial.println("Waiting for GPS Link...");
           delay(1000);
-          i = i + 1;
+          AISFC_gps.checkUblox();
         }
-        AISFCGPS::zeroLaunchSiteGPS(AISFC_gps, nmea, launch_Lat, launch_Long);
-        Serial.println("GPS Activated");
-        Serial.print("Launch site - Lat: ");
-        Serial.print(launch_Lat / 1000000., 6);
-        Serial.print(" - Long: ");
-        Serial.println(launch_Long / 1000000., 6);
+        // AISFCGPS::zeroLaunchSiteGPS(AISFC_gps, nmea, launch_Lat, launch_Long);
+        // Serial.println("GPS Activated");
+        // Serial.print("Launch site - Lat: ");
+        // Serial.print(launch_Lat / 1000000., 6);
+        // Serial.print(" - Long: ");
+        // Serial.println(launch_Long / 1000000., 6);
         gps_Flag = true;
         continue;
       case 4:
@@ -391,7 +418,13 @@ void fsAction(flightStatus currentFS) {
   }
 }
 
-
 bool stationary_Check(AISFCbaro AISFC_Baro, Adafruit_MPU6050 AISFC_Accel) {
   AISFC_Baro.readAltitude();
+}
+
+void SFE_UBLOX_GNSS::processNMEA(char incoming)
+{
+  //Take the incoming char from the u-blox I2C port and pass it on to the MicroNMEA lib
+  //for sentence cracking
+  nmea.process(incoming);
 }

@@ -62,15 +62,13 @@ bool updateGPS(SFE_UBLOX_GNSS AISFCgps, MicroNMEA nmea, long& lat_mdeg, long& lo
   {
     lat_mdeg = nmea.getLatitude();
     long_mdeg = nmea.getLongitude();
-    //gnss_alt = nmea.getAlt_long();  // <- WARNING this function is custom added by Mike 24th May 2023
-    //nmea.clear();
     return true;
   }
   else
   {
 		Serial.println("Waiting for fresh GPS data");
-    return false;
   }
+  return false;
 }
 //
 //
@@ -143,10 +141,10 @@ void getTimeGPS(SFE_UBLOX_GNSS AISFCgps, uint16_t& gps_Year, uint8_t& gps_Month,
 }
 //
 //
-void SFE_UBLOX_GNSS::processNMEA(char incoming)
-{
-	//Take the incoming char from the u-blox I2C port and pass it on to the MicroNMEA lib
-	//for sentence cracking
-	nmeaGPS.process(incoming);
-}
+// void SFE_UBLOX_GNSS::processNMEA(char incoming)
+// {
+// 	//Take the incoming char from the u-blox I2C port and pass it on to the MicroNMEA lib
+// 	//for sentence cracking
+// 	nmeaGPS.process(incoming);
+// }
 #endif

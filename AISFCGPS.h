@@ -25,15 +25,15 @@
 #include <MicroNMEA.h>
 #include <math.h>
 
-char nmeaBuffer[100];
-MicroNMEA nmea(nmeaBuffer, sizeof(nmeaBuffer));
+char nmeaBufferGPS[100];
+MicroNMEA nmeaGPS(nmeaBufferGPS, sizeof(nmeaBufferGPS));
 constexpr auto Radius = 6371000;
 constexpr auto pi = 3.14159265358979;
 //
 //
 bool initGPS(SFE_UBLOX_GNSS AISFCgps);
-bool updateGPS(SFE_UBLOX_GNSS AISFCgps, long& lat_mdeg, long& long_mdeg, long& gnss_alt);
-void zeroLaunchSiteGPS(SFE_UBLOX_GNSS AISFCgps, long& launch_Lat, long& launch_Long);
+bool updateGPS(SFE_UBLOX_GNSS AISFCgps, MicroNMEA nmea, long& lat_mdeg, long& long_mdeg, long& gnss_alt);
+void zeroLaunchSiteGPS(SFE_UBLOX_GNSS AISFCgps, MicroNMEA nmea, long& launch_Lat, long& launch_Long);
 void distance_bearingGPS(long launch_Lat, long launch_Long, long current_Lat, long current_Long);
 void getTimeGPS(SFE_UBLOX_GNSS AISFCgps, uint16_t& gps_Year, uint8_t& gps_Month, uint8_t& gps_Day, uint8_t& gps_Hour, uint8_t& gps_Minute, uint8_t& gps_Second);
 //
@@ -53,33 +53,28 @@ bool initGPS(SFE_UBLOX_GNSS AISFCgps)
 }
 //
 //
-bool updateGPS(SFE_UBLOX_GNSS AISFCgps, long& lat_mdeg, long& long_mdeg, long& gnss_alt)
+bool updateGPS(SFE_UBLOX_GNSS AISFCgps, MicroNMEA nmea, long& lat_mdeg, long& long_mdeg, long& gnss_alt)
 {
-	if (AISFCgps.checkUblox())
-	{
-		if (nmea.isValid())
-		{
-			lat_mdeg = nmea.getLatitude();
-			long_mdeg = nmea.getLongitude();
-			//gnss_alt = nmea.getAlt_long();  // <- WARNING this function is custom added by Mike 24th May 2023
-			nmea.clear();
-			return true;
-		}
-		else
-		{
-      Serial.println("Test6");
-			return false;
-		}
-	}
-	else
-	{
+
+	AISFCgps.checkUblox();
+
+  if (nmea.isValid())
+  {
+    lat_mdeg = nmea.getLatitude();
+    long_mdeg = nmea.getLongitude();
+    //gnss_alt = nmea.getAlt_long();  // <- WARNING this function is custom added by Mike 24th May 2023
+    //nmea.clear();
+    return true;
+  }
+  else
+  {
 		Serial.println("Waiting for fresh GPS data");
-		return false;
-	}
+    return false;
+  }
 }
 //
 //
-void zeroLaunchSiteGPS(SFE_UBLOX_GNSS AISFCgps, long& launch_Lat, long& launch_Long)
+void zeroLaunchSiteGPS(SFE_UBLOX_GNSS AISFCgps, MicroNMEA nmea, long& launch_Lat, long& launch_Long)
 {
 	for (int i = 0; i < 10; i++)
 	{
@@ -152,6 +147,6 @@ void SFE_UBLOX_GNSS::processNMEA(char incoming)
 {
 	//Take the incoming char from the u-blox I2C port and pass it on to the MicroNMEA lib
 	//for sentence cracking
-	nmea.process(incoming);
+	nmeaGPS.process(incoming);
 }
 #endif

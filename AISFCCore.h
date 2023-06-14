@@ -10,6 +10,8 @@
   Created By: Michael Haggart
   For: StarthAIS
   Updated by: Michael Haggart
+              Leon Yip
+              Preben Rasmussen
               #Add New Names Here
 */
 
@@ -81,30 +83,30 @@ flightStatus stateCheckFunc(flightStatus& fS, float timeSinceLaunch, bool apogee
     //If this is false && apogeeCheck is false, the rocket is in its Coast phase. 
     if (apogeeCheck == false && motorCheck == false && drogueDep == false && mainDep == false && highestAlt >= 0 && curAlt <= 50)
     {
-        return fS = flightStatus::preLaunch;
+        return fS = flightStatus::preLaunch; //0
     }
     if (fS == 0 && apogeeCheck == false && motorCheck == true && drogueDep == false && mainDep == false && highestAlt >= 0 && curAlt >= 0){
-        return fS = flightStatus::Boost;
+        return fS = flightStatus::Boost;  //1
     }
-    if (fS == 1 && apogeeCheck == false && motorCheck == true && drogueDep == false && mainDep == false && highestAlt >= 0 && curAlt >= 2)
+    if (fS == 1 && apogeeCheck == false && motorCheck == true && drogueDep == false && mainDep == false && highestAlt >= 0 && curAlt >= 4)
     {
-        return fS = flightStatus::Coast;
+        return fS = flightStatus::Coast;  //2
     }
-    if (fS == 2 && apogeeCheck == true && motorCheck == true && drogueDep == false && mainDep == false && highestAlt >= 0 && curAlt >= 6)
+    if (fS == 2 && apogeeCheck == true && motorCheck == true && drogueDep == false && mainDep == false && highestAlt >= 0 ) //removed curAlt >= 12
     {
-        return fS = flightStatus::Apogee;
+        return fS = flightStatus::Apogee; //3
     }
-    if (fS == 3 && apogeeCheck == true && motorCheck == true && drogueDep == true && mainDep == false && highestAlt >= curAlt && curAlt >= 5)
+    if (fS == 3 && apogeeCheck == true && motorCheck == true && drogueDep == true && mainDep == false && highestAlt >= curAlt) // && curAlt >= 10
     {
-        return fS = flightStatus::Drogue;
+        return fS = flightStatus::Drogue; //4
     }
-    if (fS == 4 && apogeeCheck == true && motorCheck == true && drogueDep == true && mainDep == false && highestAlt >= curAlt && (curAlt >= 0.5 || curAlt <=3))
+    if (fS == 4 && apogeeCheck == true && motorCheck == true && drogueDep == true && mainDep == false && highestAlt >= curAlt && (curAlt >= 1 && curAlt <=4))
     {
-        return fS = flightStatus::Main;
+        return fS = flightStatus::Main; //5
     }
-    if (fS == 5 && apogeeCheck == true && motorCheck == true && drogueDep == true && mainDep == true && highestAlt >= curAlt && curAlt <= 0.5)
+    if (fS == 5 && apogeeCheck == true && motorCheck == true && drogueDep == true && mainDep == true && highestAlt >= curAlt && curAlt <= 1)
     {
-        return fS = flightStatus::Landed;
+        return fS = flightStatus::Landed; //6
     }
     //if (apogeeCheck == true && motorCheck == true && drogueDep == false && mainDep == false && curAlt >= 350)
     //{
@@ -115,6 +117,8 @@ flightStatus stateCheckFunc(flightStatus& fS, float timeSinceLaunch, bool apogee
         return fS = fS;
     }
   }
+
+
 //
 //
 #endif // !AISFCCore
